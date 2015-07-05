@@ -3,8 +3,8 @@ import sys
 import paramiko
 from time import strftime
 
-iplist = open('/home/martin/iplist.txt', 'r')
-report = open('/home/martin/report.txt', 'w')
+iplist = open('/home/user/iplist.txt', 'r')
+report = open('/home/user/report.txt', 'w')
 username = 'user'
 password = 'xxx'
 
