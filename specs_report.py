@@ -5,8 +5,8 @@ from time import strftime
 
 iplist = open('/home/martin/iplist.txt', 'r')
 report = open('/home/martin/report.txt', 'w')
-username = 'root'
-password = 'PeaxyAdm1n'
+username = 'user'
+password = 'xxx'
 
 hostname = 'hostname'
 ram = 'cat /proc/meminfo | grep MemTotal'
