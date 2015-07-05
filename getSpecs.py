@@ -3,8 +3,8 @@ import sys
 import paramiko
 from time import strftime
 
-username = 'root'
-password = 'PeaxyAdm1n'
+username = 'user'
+password = 'xxx'
 hostname = 'hostname'
 ram = 'cat /proc/meminfo | grep MemTotal'
 cpu = 'grep proc /proc/cpuinfo | wc -l'
