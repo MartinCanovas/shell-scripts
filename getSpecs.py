@@ -8,14 +8,14 @@
 ############################################
 
 DESCRIPTION = """A Python script that remotely connects to linux servers via SSH
-                 to get server information and generte a report.
-                 The information gather are:
+                 in order to get server information and generate a report.
+                 The information gather is:
                  - Hostname
                  - Uptime
-                 - Total Memomory RAM
+                 - Total Memory RAM
                  - Number of CPUs
                  - OS Release Version
-                 - Filysystems disk space
+                 - File system disk space
 
                  Make sure all the remote servers have SSH key configured so that
                  this script can connect to them without prompting for password.
@@ -25,10 +25,9 @@ import os
 import sys
 import time
 import paramiko
+import socket
 import argparse
 
-source_file = '/home/martin/iplist.txt'
-report_file = '/home/martin/report.txt'
 date = time.strftime("%d-%m-%Y")
 hour = time.strftime("%H:%M:%S")
 
@@ -58,12 +57,13 @@ class linuxCommands():
 def connectToServer(host, c):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    privatekeyfile = os.path.expanduser('~/.ssh/id_rsa')
+    privatekeyfile = os.path.expanduser('~/.ssh/id_rsa')          # private SSH key file
     mykey = paramiko.RSAKey.from_private_key_file(privatekeyfile)
-    ssh.connect(host, username='root', pkey=mykey)
+    ssh.connect(host, username='root', pkey=mykey, timeout=5)                # connecting as root user
     stdin, stdout, stderr = ssh.exec_command(c)
     output = stdout.read()
-    output = output[:len(output)-1]  # remove newline
+    output = output[:len(output)-1]                               # remove newline
+    ssh.close()
 
     return output
 
@@ -108,12 +108,12 @@ def getOptions(args=sys.argv[1:]):
     parser.add_argument("--ip", type=str, help="IP address.")
     args = parser.parse_args(args)
 
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1:                       # check if no arguments were provided
         parser.print_help()
         sys.exit(1)
 
     if args.input:
-        if not os.path.exists(args.input):
+        if not os.path.exists(args.input):       # check if input file exists
             print "The file %s does not exist." % args.input
             print
             exit(1)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     args = getOptions(sys.argv[1:])
 
-    if args.ip:
+    if args.ip:    # True if user only provided one IP address
         try:
             for command in commands:
                 output = connectToServer(args.ip, command)
@@ -139,33 +139,40 @@ if __name__ == "__main__":
         except paramiko.AuthenticationException:
             print "Authentication failed when connecting to %s" % args.ip
             sys.exit(1)
-        except:
-            print "Could not SSH to %s, trying again." % args.ip
+        except socket.timeout:
+            print "Timeout connecting to %s" % args.ip
+        except socket.gaierror:
+            print "Invalid IP address or server name: %s" % args.ip
 
-    else:
+    else:         # True if user provided a file with IP addresses
 
         with open(args.output, 'w') as report:
-            report.write(date + ' ' + hour + '\n')
+            report.write('\n')
+            report.write('-------------------------\n')
+            report.write('Date and time: ' + date + ' ' + hour + '\n')
 
             with open(args.input, 'r') as iplist:
                 for server in iplist:
                     server = server[:len(server)-1]
-                    print 'Connecting to ', server
-                    counter = 1
-                    while counter != 5:
-                        try:
-                            for command in commands:
-                                output = connectToServer(server, command)
-                                writeToFile(command, output)
+                    print 'Connecting to', server
 
-                            counter = 5   # reset counter for the next server
+                    try:
+                        for command in commands:
+                            output = connectToServer(server, command)
+                            writeToFile(command, output)
 
-                        except paramiko.AuthenticationException:
-                            print "Authentication failed when connecting to %s" % server
-                            sys.exit(1)
-                        except:
-                            print "Could not SSH to %s, trying again." % server
-                            counter += 1  # try to connect to server until counter = 5
-                            time.sleep(2)
-                            if counter == 5:
-                                print "Could not connect to %s. Giving up" % server
+                    except paramiko.AuthenticationException:
+                        print "Authentication failed when connecting to %s" % server
+                        sys.exit(1)
+                    except socket.timeout:
+                        print "Timeout connecting to %s" % server
+                        report.write('\n')
+                        report.write('-------------------------\n')
+                        report.write('Timeout connecting to {0}'.format(server))
+                        report.write('\n')
+                    except socket.gaierror:
+                        print "Invalid IP address or server name"
+                        report.write('\n')
+                        report.write('-------------------------\n')
+                        report.write('Invalid IP address or server name: {0}'.format(server))
+                        report.write('\n')
