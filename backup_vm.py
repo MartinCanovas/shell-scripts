@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 '''
 This Python script creates a clone of VMs, and place it on a NFS mount share.
 During this process, the VMs are pause and later resume. They are never
