@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-############################################
+###########################################
 # Program:   getSpecs.py
 # Author:    Martin Canovas
 # Date:      August, 2015
 # License:   Public Domain
-############################################
+###########################################
 
 DESCRIPTION = """A Python script that remotely connects to linux servers via SSH
                  in order to get server information and generate a report.
